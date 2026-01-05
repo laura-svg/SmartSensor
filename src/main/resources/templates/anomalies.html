@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Журнал Аномалій</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #333; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    .anomaly-high { color: red; font-weight: bold; }
+    .home-link {
+      position: absolute; /* Встановлюємо абсолютне позиціонування */
+      top: 20px;          /* Відступ зверху */
+      right: 20px;         /* Відступ зліва */
+      font-size: 1.1em;
+      text-decoration: none; /* Прибираємо підкреслення */
+      color: #007BFF; /* Синій колір для посилання */
+      font-weight: bold;
+    }
+    /* Стиль для hover ефекту */
+    .home-link:hover {
+      color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+<a href="/" class="home-link">Головна</a>
+<h1>Журнал Виявлених Аномалій</h1>
+<p>На цій сторінці відображаються всі дані про аномалії.</p>
+<table>
+  <thead>
+  <tr>
+    <th>Тип Сенсора</th>
+    <th>Фактичне Значення</th>
+    <th>Z-критерій</th>
+    <th>Час Виявлення</th>
+
+  </tr>
+  </thead>
+  <tbody>
+  <tr th:each="anomaly : ${anomalies}">
+    <td th:text="${anomaly.sensorType}">AIR_TEMPERATURE</td>
+    <td th:text="${anomaly.detectedValue}">28.5</td>
+    <td th:classappend="${anomaly.zScoreValue > 3.0 or anomaly.zScoreValue < -3.0 ? 'anomaly-high' : ''}">
+      <span th:text="${#numbers.formatDecimal(anomaly.zScoreValue, 1, 2)}">3.51</span>
+    </td>
+    <td th:text="${#temporals.format(anomaly.timestamp, 'dd-MM-yyyy HH:mm:ss')}">2023-11-21 14:30:00</td>
+
+  </tr>
+  </tbody>
+</table>
+
+</body>
+</html>

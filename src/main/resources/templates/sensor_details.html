@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${sensorType} + ' Details'">Sensor Details</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.x/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.x/dist/chartjs-adapter-luxon.min.js"></script>
+
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        div {
+            margin-bottom: 20px;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        canvas {
+            background-color: #fff;
+            border-radius: 8px;
+        }
+        p {
+            margin: 5px 0;
+        }
+        /* Додамо стилі для кращого відображення графіків */
+        #statisticsChart, #correlationPlot, #regressionPlot, #sensorChart {
+            max-width: 800px; /* Обмежимо максимальну ширину */
+            margin: 0 auto; /* Центруємо графіки */
+            height: 400px; /* Фіксована висота */
+            display: block; /* Забезпечуємо, що canvas є блоковим елементом */
+        }
+        .home-link {
+            position: absolute; /* Встановлюємо абсолютне позиціонування */
+            top: 20px;          /* Відступ зверху */
+            right: 20px;         /* Відступ зліва */
+            font-size: 1.1em;
+            text-decoration: none; /* Прибираємо підкреслення */
+            color: #007BFF; /* Синій колір для посилання */
+            font-weight: bold;
+        }
+        /* Стиль для hover ефекту */
+        .home-link:hover {
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<h1 th:text="${sensorType.displayName}">Sensor Details</h1>
+<a href="/" class="home-link">Головна</a>
+<a href="/sensors_status">Стан датчиків</a>
+
+
+<h2>Статистика</h2>
+
+<div>
+    <canvas id="statisticsChart"></canvas>
+</div>
+
+<p>Середнє: <span th:text="${#numbers.formatDecimal(mean, 1, 2)}">0</span></p>
+<p>Максимальне: <span th:text="${#numbers.formatDecimal(max, 1, 2)}">0</span></p>
+<p>Мінімальне: <span th:text="${#numbers.formatDecimal(min, 1, 2)}">0</span></p>
+<p>Стандартне відхилення: <span th:text="${#numbers.formatDecimal(stdDev, 1, 2)}">0</span></p>
+<p>Медіана: <span th:text="${#numbers.formatDecimal(median, 1, 2)}">0</span></p>
+<p>Мода: <span th:text="${#numbers.formatDecimal(mode, 1, 2)}">0</span></p>
+
+
+
+<div th:if="${sensorType} != 'AIR_TEMPERATURE'">
+    <h2>Кореляція між даними поточного датчика і даними датчика повітря</h2>
+    <p th:if="${hasCorrelationData}">Кореляція: <span th:text="${#numbers.formatDecimal(correlation, 1, 4)}">0</span></p>
+    <p th:unless="${hasCorrelationData}">Недостатньо даних для побудови графіку кореляції.</p>
+
+    <div th:if="${hasCorrelationData}">
+        <canvas id="correlationPlot"></canvas>
+    </div>
+
+
+    <h2>Лінійна регресія між даними поточного датчика і даними датчика повітря</h2>
+    <p th:if="${hasRegressionData}">Кут нахилу лінії регресії: <span th:text="${#numbers.formatDecimal(slope, 1, 4)}">0</span></p>
+    <p th:if="${hasRegressionData}">Перетин з віссю Y: <span th:text="${#numbers.formatDecimal(intercept, 1, 4)}">0</span></p>
+    <p th:if="${hasRegressionData}">Коефіцієнт детермінації: <span th:text="${#numbers.formatDecimal(r2, 1, 4)}">0</span></p>
+    <p th:unless="${hasRegressionData}">Недостатньо даних для побудови графіку лінійної регресії.</p>
+    <div th:if="${hasRegressionData}">
+        <canvas id="regressionPlot"></canvas>
+    </div>
+</div>
+
+
+
+
+
+<h2>Ковзне середнє</h2>
+<div th:if="${!#lists.isEmpty(chartRawData)}">
+    <canvas id="sensorChart"></canvas>
+</div>
+<p th:if="${#lists.isEmpty(chartRawData)}">Недостатньо даних для побудови графіку ковзного середнього.</p>
+
+
+<!-- Вставка JavaScript з Thymeleaf -->
+<script th:inline="javascript">
+
+    const ctxStats = document.getElementById('statisticsChart').getContext('2d');
+    const statisticsChart = new Chart(ctxStats, {
+        type: 'bar',
+        data: {
+            labels: ['Середнє', 'Медіана', 'Мода', 'Максимальне', 'Мінімальне'],
+            datasets: [{
+                label: 'Значення',
+                data: [
+                    /*[[${mean}]]*/,
+                    /*[[${median}]]*/,
+                    /*[[${mode}]]*/,
+                    /*[[${max}]]*/,
+                    /*[[${min}]]*/
+                ],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Статистичний огляд'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // --- Кореляція та Лінійна Регресія ---
+    const sensorType = /*[[${sensorType}]]*/ 'UNKNOWN'; // Отримуємо тип сенсора для підписів
+    const scatterData = /*[[${scatterData}]]*/ []; // Це список об'єктів {x, y}
+    const slope = /*[[${slope}]]*/ NaN;
+    const intercept = /*[[${intercept}]]*/ NaN;
+    const hasCorrelationData = /*[[${hasCorrelationData}]]*/ false; // Отримуємо прапорець
+    const hasRegressionData = /*[[${hasRegressionData}]]*/ false;   // Отримуємо прапорець
+
+
+    if (sensorType !== 'AIR_TEMPERATURE' && hasCorrelationData) { // Використовуємо hasCorrelationData для обох графіків
+        // --- Correlation Plot (Scatter Plot) ---
+        const ctxCorr = document.getElementById('correlationPlot').getContext('2d');
+        const correlationChart = new Chart(ctxCorr, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: `Кореляція ${/*[[${#numbers.formatDecimal(correlation, 1, 4)}]]*/ ''}`, // Відображаємо кореляцію
+                    data: scatterData,
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `Кореляція між датчиком повітря та датчиком ${sensorType}`
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Температура повітря: ${context.parsed.x.toFixed(2)}, ${sensorType.displayName}: ${context.parsed.y.toFixed(2)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Температура повітря'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: sensorType
+                        }
+                    }
+                }
+            }
+        });
+
+        // --- Linear Regression Plot (Scatter Plot with Line) ---
+        const ctxReg = document.getElementById('regressionPlot').getContext('2d');
+
+        // Щоб побудувати лінію регресії, нам потрібні дві точки (мін і макс X значення)
+        // або пройти по всім X-значенням з scatterData
+        const minX = Math.min(...scatterData.map(point => point.x));
+        const maxX = Math.max(...scatterData.map(point => point.x));
+
+        // Створюємо дві точки для лінії регресії
+        const regressionLinePoints = [
+            { x: minX, y: slope * minX + intercept },
+            { x: maxX, y: slope * maxX + intercept }
+        ];
+
+        const regressionChart = new Chart(ctxReg, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Точки по даним',
+                    data: scatterData,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)'
+                }, {
+                    type: 'line', // Це лінія
+                    label: `Лінія регресії  ${/*[[${#numbers.formatDecimal(r2, 1, 4)}]]*/ ''}`, // Відображаємо R2
+                    data: regressionLinePoints, // Дані для лінії
+                    fill: false,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2,
+                    pointRadius: 0, // Приховуємо точки на лінії
+                    tension: 0 // Робимо лінію прямою
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `Лінійна регресія між датчиком ${sensorType} та датчиком повітря`
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (context.dataset.type === 'scatter') {
+                                    return `Температура повітря: ${context.parsed.x.toFixed(2)}, ${sensorType}: ${context.parsed.y.toFixed(2)}`;
+                                }
+                                return null;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Температура повітря'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: sensorType
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+
+
+    // --- Moving Average Plot (Line Chart) ---
+
+    // Перевіряємо, чи існує елемент canvas, перш ніж намагатися його отримати
+    const sensorChartCanvas = document.getElementById('sensorChart');
+    if (sensorChartCanvas && /*[[${!#lists.isEmpty(chartRawData)}]]*/) { // Додаємо перевірку на наявність даних
+        const ctx = sensorChartCanvas.getContext('2d');
+
+        const rawChartData = /*[[${chartRawData}]]*/ []; // Масив об'єктів {timestampMs, value}
+        const movingAverageData = /*[[${movingAverage}]]*/ []; // Вже вирівняний масив
+
+        // Дані для Chart.js у форматі {x: timestamp, y: value}
+        const rawSensorPoints = rawChartData.map(d => ({ x: d.timestampMs, y: d.value }));
+        // Moving Average також має бути у форматі {x: timestamp, y: value},
+        // але оскільки ми його вирівняли null-ами, треба створити точки коректно
+        const movingAveragePoints = movingAverageData.map((val, index) => {
+            if (val === null) {
+                return null; // Chart.js проігнорує null-точки
+            }
+            // Використовуємо timestamp з відповідної точки rawSensorPoints
+            return { x: rawChartData[index].timestampMs, y: val };
+        }).filter(p => p !== null); // Відфільтровуємо null, якщо не хочемо, щоб вони були в масиві
+
+
+
+
+        const chartData = {
+            datasets: [ // У Chart.js для type: 'time' datasets можуть не мати labels, а x-вісь береться з data.x
+                {
+                    label: 'Не оброблені дані датчика',
+                    data: rawSensorPoints, // Передаємо точки {x, y}
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0
+                },
+                {
+                    label: 'Ковзне середнє (довжина вікна-5)',
+                    data: movingAveragePoints, // Передаємо точки {x, y}
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.4,
+                    pointRadius: 0
+                }
+            ]
+        };
+
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: chartData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `${sensorType} дані датчика з ковзним середнім`
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function(context) {
+                                // Форматуємо мітку часу для тултіпу
+                                if (context[0] && context[0].parsed && context[0].parsed.x) {
+                                    return new Date(context[0].parsed.x).toLocaleString();
+                                }
+                                return 'N/A';
+                            },
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.parsed.y.toFixed(2);
+                                return label;
+                            }
+                        }
+                    }
+                },
+
+                scales: {
+                    x: {
+                        type: 'time', // КЛЮЧОВЕ ЗНАЧЕННЯ ДЛЯ ЧАСОВИХ РЯДІВ
+                        time: {
+                            unit: 'minute', // Початкова одиниця відображення
+                            displayFormats: {
+                                minute: 'HH:mm',
+                                hour: 'HH:mm',
+                                day: 'MMM dd'
+                            },
+                            tooltipFormat: 'MMM dd, HH:mm:ss' // Формат для тултіпу
+                        },
+                        title: {
+                            display: true,
+                            text: 'Час'
+                        }
+                    },
+                    y: {
+                        beginAtZero: false,
+                        title: {
+                            display: true,
+                            text: `${sensorType} дані`
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+</script>
+</body>
+</html>

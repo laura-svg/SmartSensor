@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Налаштування Системи</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .home-link {
+            position: absolute; /* Встановлюємо абсолютне позиціонування */
+            top: 20px;          /* Відступ зверху */
+            right: 20px;         /* Відступ зліва */
+            font-size: 1.1em;
+            text-decoration: none; /* Прибираємо підкреслення */
+            color: #007BFF; /* Синій колір для посилання */
+            font-weight: bold;
+        }
+        input[type="number"] { width: 80px; padding: 5px; }
+        button { padding: 5px 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        /* Стиль для hover ефекту */
+        .home-link:hover {
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<a href="/" class="home-link">Головна</a>
+<h1>⚙️ Керування Параметрами Системи</h1>
+<p>Ви можете змінити множник чутливості Z-Score. <strong>Зверніть увагу:</strong> чим <strong>нижче</strong> значення множника, тим <strong>вища</strong> чутливість системи до відхилень і тим <strong>більше</strong> аномалій буде виявлено.</p>
+
+<div th:if="${message}" style="color: green; font-weight: bold; margin-bottom: 15px;" th:text="${message}"></div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Тип Сенсора</th>
+            <th>Мін. Значення</th>
+            <th>Макс. Значення</th>
+            <th>Поточний Множник Чутливості(σ)</th>
+            <th>Нове Значення Чутливості</th>
+            <th>Дія</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="setting : ${settings}">
+            <form th:action="@{'/settings/update/' + ${setting.id}}" method="post">
+                <td th:text="${setting.sensorType}">AIR_TEMPERATURE</td>
+
+                <td th:text="${setting.minThreshold}">15.0</td>
+                <td th:text="${setting.maxThreshold}">30.0</td>
+
+                <td th:text="${setting.stdMultiplier}">3.0</td>
+
+                <td>
+                    <input type="number" step="0.1" name="stdMultiplier" th:value="${setting.stdMultiplier}" min="1.0" max="5.0" required/>
+                </td>
+
+                <td>
+                    <button type="submit">Оновити Чутливість (σ)</button>
+                </td>
+            </form>
+        </tr>
+        </tbody>
+    </table>
+</form>
+</body>
+</html>

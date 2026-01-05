@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="uk">
+<head>
+    <title>Стан датчиків</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .home-link {
+            position: absolute; /* Встановлюємо абсолютне позиціонування */
+            top: 20px;          /* Відступ зверху */
+            right: 20px;         /* Відступ зліва */
+            font-size: 1.1em;
+            text-decoration: none; /* Прибираємо підкреслення */
+            color: #007BFF; /* Синій колір для посилання */
+            font-weight: bold;
+        }
+         /* Стиль для hover ефекту */
+        .home-link:hover {
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<h1>Стан датчиків</h1>
+<a href="/" class="home-link">Головна</a>
+
+<ul>
+    <li><a href="/sensors_status/AIR_TEMPERATURE">Датчик повітря</a></li>
+    <li><a href="/sensors_status/AIR_HUMIDITY">Датчик вологості повітря</a></li>
+    <li><a href="/sensors_status/SOIL_MOISTURE">Датчик вологості ґрунту</a></li>
+    <li><a href="/sensors_status/LIGHT_INTENSITY">Датчик інтенсивності світла</a></li>
+    <li><a href="/sensors_status/SOIL_PH">Датчик кислотності ґрунту</a></li>
+    <li><a href="/sensors_status/CO2_LEVEL">Датчик рівня вуглекислого газу в повітрі</a></li>
+</ul>
+</body>
+</html>

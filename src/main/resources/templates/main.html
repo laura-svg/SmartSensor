@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="uk">
+<head>
+    <title>Розумна теплиця</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<h1>Панель керування розумною теплицею</h1>
+<ul>
+    <style>
+        .menu-item {
+            margin-bottom: 15px;
+        }
+    </style>
+    <ul>
+        <li class="menu-item"><a href="/sensors_status">Стан датчиків</a></li>
+        <li class="menu-item"><a href="/anomalies">Журнал Аномалій</a></li>
+        <li class="menu-item"><a href="/settings">Налаштування Системи</a></li>
+    </ul>
+</ul>
+<script th:src="@{/js/chart.js}"></script>
+</body>
+</html>
